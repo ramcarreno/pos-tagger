@@ -44,17 +44,17 @@ def test_A(A, observations, epsilon=0.0000001):
 
 
 # IT SHOULD BE APLIED .lower() to any token??????
-def calculate_B(corpus: list[tuple], unk_threshold=3):
+def calculate_B(corpus: list[list[tuple]], unk_threshold=3):
     """
     Takes a corpus as a list of tuples and returns the emission probabilities.
     
     Parameters
     ----------
-    corpus : list[tuple]
+    corpus : list[list[tuple]]
         All the training senteces as a list of tuples.
     
     unk_threshold : int
-        Threshold to consider if a word is UNK or not.
+        Threshold to consider if a word is UNK or not. If the number of occurences of a certain word is less or equal than the threshold, this word is going to be categorized as "UNK".
 
     Returns
     -------
