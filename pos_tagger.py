@@ -21,6 +21,19 @@ def calculate_A(corpus: list[tuple]):
 
 
 def calculate_B(corpus: list[tuple], unk_threshold=3):
+    """
+    Takes a corpus as a list of tuples and returns the emission probabilities.
+    
+    Parameters
+    ----------
+    corpus : list[tuple]
+        All the training senteces as a list of tuples.
+
+    Returns
+    -------
+    B : ????
+        Matrix...
+    """
     pass
 
 
