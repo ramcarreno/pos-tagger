@@ -2,7 +2,7 @@ from collections import defaultdict
 
 def calculate_A(corpus: list[tuple]):
     """
-    Takes a corpus as a list of tuples and returns the "A" matrix, and the vocabulary.
+    Takes a corpus as a list of tuples and returns the transition matrix, and the vocabulary.
     
     Parameters
     ----------
