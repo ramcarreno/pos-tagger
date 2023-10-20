@@ -3,12 +3,12 @@ import numpy as np
 
 
 def calculate_A(corpus: list[list[tuple]]):
-    """
-    Takes a corpus as a list, each element of the list is a different sentence, and each line contains a list of tuples. Calculates the transition matrix, and the vocabulary.
+    """ 
+    Calculates the transition matrix, the corpus vocabulary, and the observations.
     
     Parameters
     ----------
-    corpus : list[tuple]
+    corpus : list[list[tuple]]
         All the training senteces as a list of tuples.
 
     Returns
