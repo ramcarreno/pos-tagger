@@ -23,7 +23,7 @@ def calculate_A(corpus: list[list[tuple]]):
         Contains all the observations found in the corpus.
     """
     count = defaultdict(lambda: defaultdict(lambda: 0))
-    vocab = set()
+    vocab = set(["UNK"])
     observations = set()
 
     for sentence in corpus:
