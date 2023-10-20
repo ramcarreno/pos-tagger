@@ -28,6 +28,8 @@ def calculate_B(corpus: list[tuple], unk_threshold=3):
     ----------
     corpus : list[tuple]
         All the training senteces as a list of tuples.
+    unk_threshold : int
+        Threshold to consider if a word is UNK or not.
 
     Returns
     -------
