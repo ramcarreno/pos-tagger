@@ -26,8 +26,3 @@ def parse_conllu_file(filepath):
                 single_sentence = []
     
     return all_sentences
-    
-
-print(parse_conllu_file("C:\\Users\\usuario\\Desktop\\pos-tagger\\datasets\\en_eslspok-ud-train.conllu"))
-
-
