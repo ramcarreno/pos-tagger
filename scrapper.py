@@ -10,14 +10,14 @@ def parse_conllu_file(filepath):
     single_sentence = []
     all_sentences = []
     
-    # deletes whitespaces and skips comments
+    # lowcase, delete whitespaces and skips comments
     with open(filepath, 'r', encoding='utf-8') as conllu_file:
         for line in conllu_file:
-            line = line.strip()
+            line = line.lower().strip()
             if line.startswith("#"):
                 continue
             
-            # extracts word and pos-tag creating a nested list of sentences
+            # extract word and pos-tag creating a nested list of sentences
             columns = line.split("\t")
             if len(columns) != 1:
                 single_sentence.append((columns[1], columns[3]))
@@ -26,3 +26,6 @@ def parse_conllu_file(filepath):
                 single_sentence = []
     
     return all_sentences
+    
+
+
