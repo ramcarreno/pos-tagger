@@ -19,15 +19,14 @@ def calculate_A(corpus: list[list[tuple]]):
         So if we want to know which is the probability of having a "NOUN" after a "DET", we should check A["DET"]["NOUN"]
     """
     count = defaultdict(lambda: defaultdict(lambda: 0))
-    
     for sentence in corpus:
         for prev, actual in zip(sentence[:-1], sentence[1:]):
             count[prev[1]][actual[1]] += 1
 
     A = defaultdict(lambda: defaultdict(lambda: -np.inf))
-    for prev_state, act_posibilities in count.items():
-        total = sum(act_posibilities.values())
-        for actual_state, freq in act_posibilities.items():
+    for prev_state, actual_posibilities in count.items():
+        total = sum(actual_posibilities.values())
+        for actual_state, freq in actual_posibilities.items():
             A[prev_state][actual_state] = np.log2(freq/total)
     
     return A
@@ -36,11 +35,11 @@ def calculate_A(corpus: list[list[tuple]]):
 def test_A(A, epsilon=0.0000001):
     all_its_ok = True
     for i_state in A.keys():
-        suma = 0
+        total = 0
         for log_p in A[i_state].values():
-            suma += np.exp2(log_p)
-        if abs(suma-1)>epsilon:
-            print(f"ERROR: {i}. SUM of probabilities: {suma} should be 1.")
+            total += np.exp2(log_p)
+        if abs(total-1)>epsilon:
+            print(f"ERROR: {i_state}. SUM of probabilities: {total} should be 1.")
             all_its_ok = False
     if all_its_ok:
         print("All its ok in A! :)")
@@ -103,12 +102,13 @@ def calculate_B(corpus: list[list[tuple]], unk_threshold=3):
 def test_B(B, epsilon=0.0000001):
     all_its_ok = True
     for word in B.keys():
-        suma = 0
+        total = 0
         for log_p in B[word].values():
-            suma += np.exp2(log_p)
-        if abs(suma-1)>epsilon:
-            print(f"ERROR: {word}. SUM of probabilities: {suma} should be 1.")
+            total += np.exp2(log_p)
+        if abs(total-1)>epsilon:
+            print(f"ERROR: {word}. SUM of probabilities: {total} should be 1.")
             all_its_ok = False
+    
     if all_its_ok:
         print("All its ok in B! :)")
 
@@ -141,16 +141,15 @@ def calculate_PI(corpus: list[list[tuple]]):
 
 
 def test_PI(PI, epsilon=0.0000001):
-    suma = 0
+    total = 0
     for log_p in PI.values():
-        suma += np.exp2(log_p)
+        total += np.exp2(log_p)
     
-    if abs(suma-1)>epsilon:
-        print(f"ERROR. SUM of probabilities: {suma} should be 1.")
+    if abs(total-1)>epsilon:
+        print(f"ERROR. SUM of probabilities: {total} should be 1.")
     else:
         print("All its ok in PI! :)")
 
-        
 
 def predict(sentence: list, A, B, PI, vocab)-> list:
     pass
