@@ -2,7 +2,6 @@ import numpy as np
 import plotly.graph_objects as go
 
 
-# Shows log probabilities in scale, legend is global for all the map
 def plot_viterbi_path_binary(
     viterbi: np.array, backpointer: list, sentence: str, tags: str
 ) -> None:
@@ -39,7 +38,6 @@ def plot_viterbi_path_binary(
     fig.show(legend=False)
 
 
-# Shows log probabilities in scale, legend is global for all the map
 def plot_viterbi_matrix(viterbi: np.array, sentence: str, tags: str) -> None:
     """
     Shows the viterbi matrix result, painting the probabilities overall
