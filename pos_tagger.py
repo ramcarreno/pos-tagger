@@ -33,13 +33,17 @@ def calculate_A(corpus: list[list[tuple]]):
     return A
 
 
-def test_A(A, states, epsilon=0.0000001):
-    for i in states:
+def test_A(A, epsilon=0.0000001):
+    all_its_ok = True
+    for i_state in A.keys():
         suma = 0
-        for j in states:
-            suma += np.exp2(A[i][j])
+        for log_p in A[i_state].values():
+            suma += np.exp2(log_p)
         if abs(suma-1)>epsilon:
-            print(f"ERROR: {i}. SUM: {suma} should be 1.")
+            print(f"ERROR: {i}. SUM of probabilities: {suma} should be 1.")
+            all_its_ok = False
+    if all_its_ok:
+        print("All its ok in A! :)")
 
 
 # IT SHOULD BE APLIED .lower() to any token??????
@@ -96,10 +100,17 @@ def calculate_B(corpus: list[list[tuple]], unk_threshold=3):
     return B, vocab, states
 
 
-def test_B(B, vocab, epsilon=0.0000001):
-    for word in vocab: 
-        if abs(sum(B[word].values())-1)>epsilon:
-            print(f"ERROR: {word}. SUM: {abs(sum(B[word].values())-1)} should be 1.")
+def test_B(B, epsilon=0.0000001):
+    all_its_ok = True
+    for word in B.keys():
+        suma = 0
+        for log_p in B[word].values():
+            suma += np.exp2(log_p)
+        if abs(suma-1)>epsilon:
+            print(f"ERROR: {word}. SUM of probabilities: {suma} should be 1.")
+            all_its_ok = False
+    if all_its_ok:
+        print("All its ok in B! :)")
 
 
 def calculate_PI(corpus: list[list[tuple]]):
@@ -127,6 +138,18 @@ def calculate_PI(corpus: list[list[tuple]]):
         PI[state] = np.log2(freq/total)
     
     return PI
+
+
+def test_PI(PI, epsilon=0.0000001):
+    suma = 0
+    for log_p in PI.values():
+        suma += np.exp2(log_p)
+    
+    if abs(suma-1)>epsilon:
+        print(f"ERROR. SUM of probabilities: {suma} should be 1.")
+    else:
+        print("All its ok in PI! :)")
+
         
 
 def predict(sentence: list, A, B, PI, vocab)-> list:
