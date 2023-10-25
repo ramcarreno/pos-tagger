@@ -1,5 +1,7 @@
+from collections import Counter
 import numpy as np
 import plotly.graph_objects as go
+import plotly.express as px
 
 
 def plot_viterbi_path_binary(
@@ -58,3 +60,14 @@ def plot_viterbi_matrix(viterbi: np.array, sentence: str, tags: str) -> None:
         )
     )
     fig.show(legend=False)
+
+
+def plot_frequency_of_(feature: str, feature_counts: Counter, top=50):
+    most_common_counts = feature_counts.most_common(top)
+    x = [word for word, _ in most_common_counts]
+    y = [count for _, count in most_common_counts]
+
+    fig = px.bar(x=x, y=y, title=f"Top {top} {feature} of the dataset")
+    fig.update_xaxes(title=f"{feature}".title())
+    fig.update_yaxes(title=f"Occurrences")
+    fig.show()
