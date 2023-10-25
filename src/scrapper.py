@@ -1,17 +1,25 @@
 def parse_conllu_file(filepath):
     """
-    Parse a CoNLL-U format file and return list[list[tuple]] of word and pos-tag
+    Parse a CoNLL-U format file and extract words and their part-of-speech (POS) tags.
 
-    to be used as part of corpus preparation for the file pos_tagger.py
+    Parameters
+    ----------
+    filepath : str
+        The path to the CoNLL-U format file to be parsed.
 
+    Returns
+    -------
+    list[list[tuple]]
+        A list of sentences, where each sentence is represented as a list of
+        (word, POS_tag) tuples.
     """
+    # accumulators
+    sentence, sentences = [], []
 
-    single_sentence = []
-    all_sentences = []
-
-    # lowcase, delete whitespaces and skips comments
+    # parsing
     with open(filepath, "r", encoding="utf-8") as conllu_file:
         for line in conllu_file:
+            # transform to lowercase, delete whitespaces and skip comments
             line = line.lower().strip()
             if line.startswith("#"):
                 continue
@@ -19,9 +27,9 @@ def parse_conllu_file(filepath):
             # extract word and pos-tag creating a nested list of sentences
             columns = line.split("\t")
             if len(columns) != 1:
-                single_sentence.append((columns[1], columns[3]))
+                sentence.append((columns[1], columns[3]))
             else:
-                all_sentences.append(single_sentence)
-                single_sentence = []
+                sentences.append(sentence)
+                sentence = []
 
-    return all_sentences
+    return sentences

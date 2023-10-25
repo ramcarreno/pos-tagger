@@ -1,121 +1,113 @@
 from collections import defaultdict
-from typing import Tuple
 import numpy as np
+from typing import List
+
+from src.scrapper import parse_conllu_file
 
 
-def calculate_A(corpus: list[list[tuple]]) -> defaultdict:
+def get_transition_matrix(corpus: List[List[tuple]]):
     """
-    Calculates the transition matrix, the corpus vocabulary, and the states.
+    Compute a transition matrix from a corpus of tagged sentences.
 
     Parameters
     ----------
     corpus : list[list[tuple]]
-        All the training senteces as a list of tuples.
+        A list of sentences, where each sentence is represented as a list of
+        (word, POS_tag) tuples.
 
     Returns
     -------
-    A : defaultdict[defaultdict]
-        Transition matrix of the corpus. Contains the Log2 of the probability. log(p) of unknown = -np.inf
-        This matrix works as: A[i][j] = log2(p(i->j))
-        So if we want to know which is the probability of having a "NOUN" after a "DET", we should check A["DET"]["NOUN"]
+    transition_matrix : defaultdict[defaultdict]
+        A matrix representing the probabilities of transitioning from one POS tag to another,
+        containing the log2 of the probability, so that A[i][j] = log2(p(i->j)).
+        A[prev_tag][current_tag] contains the log probability of transitioning from prev_tag
+        to current_tag. So if we want to know the log-probability of seeing a "NOUN" after a
+        "DET", A["DET"]["NOUN"] should be accessed.
     """
+    # count all instances of each distinct tag following each distinct tag
     count = defaultdict(lambda: defaultdict(lambda: 0))
     for sentence in corpus:
-        for prev, actual in zip(sentence[:-1], sentence[1:]):
-            count[prev[1]][actual[1]] += 1
+        for prev, current in zip(sentence[:-1], sentence[1:]):
+            count[prev[1]][current[1]] += 1
 
-    A = defaultdict(lambda: defaultdict(lambda: -np.inf))
-    for prev_state, actual_posibilities in count.items():
-        total = sum(actual_posibilities.values())
-        for actual_state, freq in actual_posibilities.items():
-            A[prev_state][actual_state] = np.log2(freq / total)
+    # calculate the probability each distinct tag follows each distinct tag
+    # and store in the form of a transition_matrix
+    transition_matrix = defaultdict(lambda: defaultdict(lambda: -np.inf))  # probability 0 to logprob -> -inf
+    for prev_tag, possible_tags in count.items():
+        total = sum(possible_tags.values())
+        for current_tag, freq in possible_tags.items():
+            transition_matrix[prev_tag][current_tag] = np.log2(freq / total)
 
-    return A
-
-
-def test_A(A, epsilon=0.0000001):
-    all_its_ok = True
-    for i_state in A.keys():
-        total = 0
-        for log_p in A[i_state].values():
-            total += np.exp2(log_p)
-        if abs(total - 1) > epsilon:
-            print(f"ERROR: {i_state}. SUM of probabilities: {total} should be 1.")
-            all_its_ok = False
-    if all_its_ok:
-        print("All its ok in A! :)")
+    return transition_matrix
 
 
-def calculate_B(
-    corpus: list[list[tuple]], unk_threshold=3
-) -> Tuple[defaultdict, set, set]:
+def get_emission_matrix(corpus: List[List[tuple]], unk_threshold=3):
     """
-    Takes a corpus as a list of tuples and returns the emission probabilities.
+    Compute the emission probabilities from a corpus of tagged sentences.
 
     Parameters
     ----------
     corpus : list[list[tuple]]
-        All the training senteces as a list of tuples.
+        A list of sentences, where each sentence is represented as a list of
+        (word, POS_tag) tuples.
 
     unk_threshold : int
-        Threshold to consider if a word is UNK or not. If the number of occurences of a certain word is less or equal than the threshold, this word is going to be categorized as "UNK".
+        An integer representing the threshold to determine if a word should be considered
+        unknown with respect to the corpus. If the word occurs less than or equal to the
+        specified threshold, it will be labeled as 'UNK'.
 
     Returns
     -------
-    B : defaultdict[defaultdict]
-        Emission probabilities matrix of the given corpus. Contains the Log2 of the probability. log(p) of unknown = -np.inf
+    tuple[defaultdict[defaultdict], set, set]
+        A tuple containing three elements:
 
-    vocab : set
-        Vocabulary with all the training tokens.
+        emission_matrix : defaultdict[defaultdict]
+            Emission probabilities matrix of the given corpus, containing the log2 of each
+            probability.
 
-    states : set
-        Contains all the states found in the corpus.
+        vocab : set
+            Vocabulary (words) within all the training tokens.
+
+        tags : set
+            Contains all the possible states (distinct tags) found in the corpus.
     """
+    # init accumulators
     count = defaultdict(lambda: defaultdict(lambda: 0))
-    word_freq = defaultdict(lambda: 0)
-    vocab = set(["UNK"])
-    states = set()
+    words = defaultdict(lambda: 0)
+    vocab = {"UNK"}
+    tags = set()
 
+    # count all words appearing in corpus + save all possible tags
     for sentence in corpus:
-        for word, state in sentence:
-            word_freq[word] += 1
-            states.add(state)
+        for word, tag in sentence:
+            words[word] += 1
+            tags.add(tag)
 
-    for word, freq in word_freq.items():
+    # filter vocabulary from words taking into account 'unk_threshold'
+    for word, freq in words.items():
         if freq > unk_threshold:
             vocab.add(word)
 
+    # count all distinct tags associated to each word
     for sentence in corpus:
-        for word, state in sentence:
+        for word, tag in sentence:
             if word in vocab:
-                count[word][state] += 1
+                count[word][tag] += 1
             else:
-                count["UNK"][state] += 1
+                count["UNK"][tag] += 1
 
-    B = defaultdict(lambda: defaultdict(lambda: -np.inf))
-    for word, posibilities in count.items():
-        total = sum(posibilities.values())
-        for state, freq in posibilities.items():
-            B[word][state] = np.log2(freq / total)
+    # calculate the probability each distinct word is categorized as each distinct tag
+    # and store in the form of an emission_matrix
+    emission_matrix = defaultdict(lambda: defaultdict(lambda: -np.inf))
+    for word, possible_tags in count.items():
+        total = sum(possible_tags.values())
+        for tag, freq in possible_tags.items():
+            emission_matrix[word][tag] = np.log2(freq / total)
 
-    return B, vocab, states
-
-
-def test_B(B, epsilon=0.0000001):
-    all_its_ok = True
-    for word in B.keys():
-        total = 0
-        for log_p in B[word].values():
-            total += np.exp2(log_p)
-        if abs(total - 1) > epsilon:
-            print(f"ERROR: {word}. SUM of probabilities: {total} should be 1.")
-            all_its_ok = False
-
-    if all_its_ok:
-        print("All its ok in B! :)")
+    return emission_matrix, vocab, tags
 
 
-def calculate_PI(corpus: list[list[tuple]]) -> defaultdict:
+def get_initial_state(corpus: List[List[tuple]]):  # TODO: refactor
     """
     Calculates the probability of being in the start of a sentence every possible state.
 
@@ -142,29 +134,14 @@ def calculate_PI(corpus: list[list[tuple]]) -> defaultdict:
     return PI
 
 
-def test_PI(PI, epsilon=0.0000001):
-    total = 0
-    for log_p in PI.values():
-        total += np.exp2(log_p)
-
-    if abs(total - 1) > epsilon:
-        print(f"ERROR. SUM of probabilities: {total} should be 1.")
-    else:
-        print("All its ok in PI! :)")
-
-
-def predict(sentence: list, A, B, PI, vocab) -> list:
-    pass
-
-
-def viterbi_logprobs(
+def viterbi_logprobs(  # TODO: refactor
     A: defaultdict,
     B: defaultdict,
     PI: defaultdict,
     sentence: str,
     states: list,
     vocab: set,
-) -> tuple[np.array, list, float]:
+):
     """
     Parameters
     ----------
