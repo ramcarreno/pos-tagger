@@ -3,208 +3,213 @@ from typing import Tuple
 import numpy as np
 
 
-def calculate_A(corpus: list[list[tuple]]) -> defaultdict:
-    """
-    Calculates the transition matrix, the corpus vocabulary, and the states.
+class HiddenMarkovModel:
+    def __init__(self, unk_threshold: int = 3, unk_token_value: str = "UNK"):
+        self.unk_threshold = unk_threshold
+        self.unk_token_value = unk_token_value
 
-    Parameters
-    ----------
-    corpus : list[list[tuple]]
-        All the training senteces as a list of tuples.
+    def __str__(self):
+        return f"""
+            Hidden Markov Model has been trained with a vocabulary of size = {len(self.vocab)} and the following states = {self.states}. 
+            Unknown tokens are represented as {self.unk_token_value} with a threshold of {self.unk_threshold}.
+        """
 
-    Returns
-    -------
-    A : defaultdict[defaultdict]
-        Transition matrix of the corpus. Contains the Log2 of the probability. log(p) of unknown = -np.inf
-        This matrix works as: A[i][j] = log2(p(i->j))
-        So if we want to know which is the probability of having a "NOUN" after a "DET", we should check A["DET"]["NOUN"]
-    """
-    count = defaultdict(lambda: defaultdict(lambda: 0))
-    for sentence in corpus:
-        for prev, actual in zip(sentence[:-1], sentence[1:]):
-            count[prev[1]][actual[1]] += 1
+    def fit(self, corpus: list[list[tuple]]):
+        self.A = self.calculate_A(corpus)
+        self.B, self.vocab, self.states = self.calculate_B(corpus, self.unk_threshold)
+        self.PI = self.calculate_PI(corpus)
 
-    A = defaultdict(lambda: defaultdict(lambda: -np.inf))
-    for prev_state, actual_posibilities in count.items():
-        total = sum(actual_posibilities.values())
-        for actual_state, freq in actual_posibilities.items():
-            A[prev_state][actual_state] = np.log2(freq / total)
+    def predict(self, sentence: str) -> tuple[np.array, list, float]:
+        return self.viterbi_logprobs(
+            self.A, self.B, self.PI, sentence, self.states, self.vocab
+        )
 
-    return A
+    def calculate_A(self, corpus: list[list[tuple]]) -> defaultdict:
+        """
+        Calculates the transition matrix, the corpus vocabulary, and the states.
 
+        Parameters
+        ----------
+        corpus : list[list[tuple]]
+            All the training senteces as a list of tuples.
 
-def test_A(A, epsilon=0.0000001):
-    all_its_ok = True
-    for i_state in A.keys():
+        Returns
+        -------
+        A : defaultdict[defaultdict]
+            Transition matrix of the corpus. Contains the Log2 of the probability. log(p) of unknown = -np.inf
+            This matrix works as: A[i][j] = log2(p(i->j))
+            So if we want to know which is the probability of having a "NOUN" after a "DET", we should check A["DET"]["NOUN"]
+        """
+        count = defaultdict(lambda: defaultdict(lambda: 0))
+        for sentence in corpus:
+            for prev, actual in zip(sentence[:-1], sentence[1:]):
+                count[prev[1]][actual[1]] += 1
+
+        A = defaultdict(lambda: defaultdict(lambda: -np.inf))
+        for prev_state, actual_posibilities in count.items():
+            total = sum(actual_posibilities.values())
+            for actual_state, freq in actual_posibilities.items():
+                A[prev_state][actual_state] = np.log2(freq / total)
+
+        return A
+
+    def validate_A(self, A: defaultdict, epsilon=0.0000001):
+        for i_state in A.keys():
+            total = 0
+            for log_p in A[i_state].values():
+                total += np.exp2(log_p)
+            if abs(total - 1) > epsilon:
+                raise Exception(
+                    f"ERROR: {i_state}. SUM of probabilities: {total} should be 1."
+                )
+
+    def calculate_B(
+        self, corpus: list[list[tuple]], unk_threshold=3
+    ) -> Tuple[defaultdict, set, list]:
+        """
+        Takes a corpus as a list of tuples and returns the emission probabilities.
+
+        Parameters
+        ----------
+        corpus : list[list[tuple]]
+            All the training senteces as a list of tuples.
+
+        unk_threshold : int
+            Threshold to consider if a word is UNK or not. If the number of occurences of a certain word is less or equal than the threshold, this word is going to be categorized as self.unk_token_value.
+
+        Returns
+        -------
+        B : defaultdict[defaultdict]
+            Emission probabilities matrix of the given corpus. Contains the Log2 of the probability. log(p) of unknown = -np.inf
+
+        vocab : set
+            Vocabulary with all the training tokens.
+
+        states : set
+            Contains all the states found in the corpus.
+        """
+        count = defaultdict(lambda: defaultdict(lambda: 0))
+        word_freq = defaultdict(lambda: 0)
+        vocab = set(self.unk_token_value)
+        states = set()
+
+        for sentence in corpus:
+            for word, state in sentence:
+                word_freq[word] += 1
+                states.add(state)
+
+        for word, freq in word_freq.items():
+            if freq > unk_threshold:
+                vocab.add(word)
+
+        for sentence in corpus:
+            for word, state in sentence:
+                if word in vocab:
+                    count[word][state] += 1
+                else:
+                    count[self.unk_token_value][state] += 1
+
+        B = defaultdict(lambda: defaultdict(lambda: -np.inf))
+        for word, posibilities in count.items():
+            total = sum(posibilities.values())
+            for state, freq in posibilities.items():
+                B[word][state] = np.log2(freq / total)
+
+        return B, vocab, list(states)
+
+    def validate_B(self, B, epsilon=0.0000001):
+        for word in B.keys():
+            total = 0
+            for log_p in B[word].values():
+                total += np.exp2(log_p)
+            if abs(total - 1) > epsilon:
+                raise Exception(
+                    f"ERROR: {word}. SUM of probabilities: {total} should be 1."
+                )
+
+    def calculate_PI(self, corpus: list[list[tuple]]) -> defaultdict:
+        """
+        Calculates the probability of being in the start of a sentence every possible state.
+
+        Parameters
+        ----------
+        corpus : list[list[tuple]]
+            All the training senteces as a list of tuples.
+
+        Returns
+        -------
+        PI : ????
+            ...
+        """
+        count = defaultdict(lambda: 0)
+        for sentence in corpus:
+            first_state = sentence[0][1]
+            count[first_state] += 1
+
+        PI = defaultdict(lambda: -np.inf)
+        total = sum(count.values())
+        for state, freq in count.items():
+            PI[state] = np.log2(freq / total)
+
+        return PI
+
+    def validate_PI(self, PI, epsilon=0.0000001):
         total = 0
-        for log_p in A[i_state].values():
+        for log_p in PI.values():
             total += np.exp2(log_p)
+
         if abs(total - 1) > epsilon:
-            print(f"ERROR: {i_state}. SUM of probabilities: {total} should be 1.")
-            all_its_ok = False
-    if all_its_ok:
-        print("All its ok in A! :)")
+            raise Exception(f"ERROR. SUM of probabilities: {total} should be 1.")
 
+    def viterbi_logprobs(
+        self,
+        A: defaultdict,
+        B: defaultdict,
+        PI: defaultdict,
+        sentence: str,
+        states: list,
+        vocab: set,
+    ) -> tuple[np.array, list, float]:
+        """
+        Parameters
+        ----------
+        A: transition matrix -> NxN where N is the number of states that can occur (e.g. Noun, Verbs, Adjectives, etc)
+        B: observation matrix (probability that a word belongs to state) -> NxT where T is the length of the sentence.
+        PI: initial probabilities matrix (probability of a word of being in the beginning of the sentence 1xN.
 
-def calculate_B(
-    corpus: list[list[tuple]], unk_threshold=3
-) -> Tuple[defaultdict, set, set]:
-    """
-    Takes a corpus as a list of tuples and returns the emission probabilities.
+        Returns
+        -------
+        viterbi: np.array
+            matrix with the probabilities computed at each step t
+        backpointer: list[int]
+            list of indexes of the optimal
+        best_logprobability: float
+            probability of the best path found
 
-    Parameters
-    ----------
-    corpus : list[list[tuple]]
-        All the training senteces as a list of tuples.
+        """
+        # variable initialization
+        words = sentence.split(" ")
+        words = [word if word in vocab else self.unk_token_value for word in words]
 
-    unk_threshold : int
-        Threshold to consider if a word is UNK or not. If the number of occurences of a certain word is less or equal than the threshold, this word is going to be categorized as "UNK".
+        N = len(states)
+        T = len(words)
+        viterbi = np.full((N, T), -np.inf)
+        backpointer = []
 
-    Returns
-    -------
-    B : defaultdict[defaultdict]
-        Emission probabilities matrix of the given corpus. Contains the Log2 of the probability. log(p) of unknown = -np.inf
-
-    vocab : set
-        Vocabulary with all the training tokens.
-
-    states : set
-        Contains all the states found in the corpus.
-    """
-    count = defaultdict(lambda: defaultdict(lambda: 0))
-    word_freq = defaultdict(lambda: 0)
-    vocab = set(["UNK"])
-    states = set()
-
-    for sentence in corpus:
-        for word, state in sentence:
-            word_freq[word] += 1
-            states.add(state)
-
-    for word, freq in word_freq.items():
-        if freq > unk_threshold:
-            vocab.add(word)
-
-    for sentence in corpus:
-        for word, state in sentence:
-            if word in vocab:
-                count[word][state] += 1
-            else:
-                count["UNK"][state] += 1
-
-    B = defaultdict(lambda: defaultdict(lambda: -np.inf))
-    for word, posibilities in count.items():
-        total = sum(posibilities.values())
-        for state, freq in posibilities.items():
-            B[word][state] = np.log2(freq / total)
-
-    return B, vocab, states
-
-
-def test_B(B, epsilon=0.0000001):
-    all_its_ok = True
-    for word in B.keys():
-        total = 0
-        for log_p in B[word].values():
-            total += np.exp2(log_p)
-        if abs(total - 1) > epsilon:
-            print(f"ERROR: {word}. SUM of probabilities: {total} should be 1.")
-            all_its_ok = False
-
-    if all_its_ok:
-        print("All its ok in B! :)")
-
-
-def calculate_PI(corpus: list[list[tuple]]) -> defaultdict:
-    """
-    Calculates the probability of being in the start of a sentence every possible state.
-
-    Parameters
-    ----------
-    corpus : list[list[tuple]]
-        All the training senteces as a list of tuples.
-
-    Returns
-    -------
-    PI : ????
-        ...
-    """
-    count = defaultdict(lambda: 0)
-    for sentence in corpus:
-        first_state = sentence[0][1]
-        count[first_state] += 1
-
-    PI = defaultdict(lambda: -np.inf)
-    total = sum(count.values())
-    for state, freq in count.items():
-        PI[state] = np.log2(freq / total)
-
-    return PI
-
-
-def test_PI(PI, epsilon=0.0000001):
-    total = 0
-    for log_p in PI.values():
-        total += np.exp2(log_p)
-
-    if abs(total - 1) > epsilon:
-        print(f"ERROR. SUM of probabilities: {total} should be 1.")
-    else:
-        print("All its ok in PI! :)")
-
-
-def predict(sentence: list, A, B, PI, vocab) -> list:
-    pass
-
-
-def viterbi_logprobs(
-    A: defaultdict,
-    B: defaultdict,
-    PI: defaultdict,
-    sentence: str,
-    states: list,
-    vocab: set,
-) -> tuple[np.array, list, float]:
-    """
-    Parameters
-    ----------
-    A: transition matrix -> NxN where N is the number of states that can occur (e.g. Noun, Verbs, Adjectives, etc)
-    B: observation matrix (probability that a word belongs to state) -> NxT where T is the length of the sentence.
-    PI: initial probabilities matrix (probability of a word of being in the beginning of the sentence 1xN.
-
-    Returns
-    -------
-    viterbi: np.array
-        matrix with the probabilities computed at each step t
-    backpointer: list[int]
-        list of indexes of the optimal
-    best_logprobability: float
-        probability of the best path found
-
-    """
-    # variable initialization
-    words = sentence.split(" ")
-    words = [word if word in vocab else "UNK" for word in words]
-
-    N = len(states)
-    T = len(words)
-    viterbi = np.full((N, T), -np.inf)
-    backpointer = []
-
-    # initialization step
-    for idx, state in enumerate(states):
-        viterbi[idx, 0] = PI[state] + B[words[0]][state]
-    best_arg = np.argmax(viterbi[:, 0])
-    best_logprob = viterbi[best_arg, 0]
-    backpointer.append(best_arg)
-
-    for idx_word, word in enumerate(words[1:], 1):  # skipping first word
-        for idx_state, state in enumerate(states):
-            viterbi[idx_state, idx_word] = (
-                best_logprob + A[states[backpointer[-1]]][state] + B[word][state]
-            )
-        best_arg = np.argmax(viterbi[:, idx_word])
-        best_logprob = viterbi[best_arg, idx_word]
+        # initialization step
+        for idx, state in enumerate(states):
+            viterbi[idx, 0] = PI[state] + B[words[0]][state]
+        best_arg = np.argmax(viterbi[:, 0])
+        best_logprob = viterbi[best_arg, 0]
         backpointer.append(best_arg)
 
-    return viterbi, backpointer, best_logprob
+        for idx_word, word in enumerate(words[1:], 1):  # skipping first word
+            for idx_state, state in enumerate(states):
+                viterbi[idx_state, idx_word] = (
+                    best_logprob + A[states[backpointer[-1]]][state] + B[word][state]
+                )
+            best_arg = np.argmax(viterbi[:, idx_word])
+            best_logprob = viterbi[best_arg, idx_word]
+            backpointer.append(best_arg)
+
+        return viterbi, backpointer, best_logprob
