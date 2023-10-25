@@ -15,10 +15,10 @@ Putting it here atm to have it in mind:
 * Compare using matrices vs dicts
 
 # Tasks
-[] Build "predict" -> build the class
-[] Refactor code and convert to class
-[] Performance analysis (computationally-wise)
-[] Performance analysis (algorithm quality-wise: e.g. precision, recall, etc -> 2 languages datasets, how making an error propagates errors)
-[] EDA (Exploratory data analysis)
-[] ⚠️ States -> convert to list !! ⚠️
+- [] Build "predict" -> build the class
+- [] Refactor code and convert to class
+- [] Performance analysis (computationally-wise)
+- [] Performance analysis (algorithm quality-wise: e.g. precision, recall, etc -> 2 languages datasets, how making an error propagates errors)
+- [] EDA (Exploratory data analysis)
+- [] ⚠️ States -> convert to list !! ⚠️
 
