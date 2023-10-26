@@ -5,10 +5,6 @@ from typing import List
 from scrapper import parse_conllu_file
 
 
-# TODO: classes
-# tagger.HiddenMarkovModelTrainer
-# tagger.HiddenMarkovModelTagger
-
 class HiddenMarkovModelTrainer:
     def __init__(self, corpus: List[List[tuple]]):
         self.corpus = corpus
@@ -23,6 +19,7 @@ class HiddenMarkovModelTrainer:
         )
 
     def vocabulary(self, unk_threshold=3):
+        # init
         words = defaultdict(lambda: 0)
         vocab = {"UNK"}
 
@@ -39,23 +36,21 @@ class HiddenMarkovModelTrainer:
         return vocab
 
     def tagset(self):
-        # save all possible tags
-        tags = set()
+        # init
+        tagset = set()
+
+        # save all possible tags found in corpus
         for sentence in self.corpus:
             for word, tag in sentence:
-                tags.add(tag)
-        tags = list(tags)  # convert resulting set to list so an order is kept
-        return tags
+                tagset.add(tag)
+
+        # convert resulting set to list so an order is kept
+        tagset = list(tagset)
+        return tagset
 
     def transition_matrix(self):
         """
         Compute a transition matrix from a corpus of tagged sentences.
-
-        Parameters
-        ----------
-        corpus : list[list[tuple]]
-            A list of sentences, where each sentence is represented as a list of
-            (word, POS_tag) tuples.
 
         Returns
         -------
@@ -89,26 +84,11 @@ class HiddenMarkovModelTrainer:
         """
         Compute the emission probabilities from a corpus of tagged sentences.
 
-        Parameters
-        ----------
-        corpus : list[list[tuple]]
-            A list of sentences, where each sentence is represented as a list of
-            (word, POS_tag) tuples.
-
         Returns
         -------
         emission_matrix : defaultdict[defaultdict]
-            A tuple containing three elements:
-
-            emission_matrix : defaultdict[defaultdict]
-                Emission probabilities matrix of the given corpus, containing the log2 of each
-                probability.
-
-            vocab : set
-                Vocabulary (words) within all the training tokens.
-
-            tags : list
-                Contains all the possible states (distinct tags) found in the corpus.
+            Emission probabilities matrix of the given corpus, containing the log2 of each
+            probability.
         """
         # init accumulators
         count = defaultdict(lambda: defaultdict(lambda: 0))
@@ -117,7 +97,7 @@ class HiddenMarkovModelTrainer:
         # count all distinct tags associated to each word
         for sentence in self.corpus:
             for word, tag in sentence:
-                if word in vocab:
+                if word in vocab:  # check if word is in vocabulary!
                     count[word][tag] += 1
                 else:
                     count["UNK"][tag] += 1
@@ -134,19 +114,14 @@ class HiddenMarkovModelTrainer:
 
     def initial_state(self):
         """
-        Compute the initial state (first word tag) probabilities from a corpus of tagged sentences.
-
-        Parameters
-        ----------
-        corpus : list[list[tuple]]
-            A list of sentences, where each sentence is represented as a list of
-            (word, POS_tag) tuples.
+        Compute the initial state (first word tag) probabilities from a corpus of tagged
+        sentences.
 
         Returns
         -------
         initial_state : defaultdict
-            A vector representing the probabilities of the first word of a sentence being a certain
-            type of POS tag, containing the log2 of each probability.
+            A vector representing the probabilities of the first word of a sentence being a
+            certain type of POS tag, containing the log2 of each probability.
         """
         # init accumulators
         count = defaultdict(lambda: 0)
@@ -166,65 +141,71 @@ class HiddenMarkovModelTrainer:
 
 
 class HiddenMarkovModelTagger:
-    def __init__(self, transition_matrix, emission_matrix, initial_state, tags, vocabulary):
+    def __init__(self, transition_matrix, emission_matrix, initial_state, tagset, vocabulary):
         self.transition_matrix = transition_matrix
         self.emission_matrix = emission_matrix
         self.initial_state = initial_state
-        self.tags = tags
+        self.tagset = tagset
         self.vocabulary = vocabulary
 
+    def viterbi_best_path(self, sentence):
+        """
+        Compute the Viterbi algorithm over a sentence to find out its most probable POS tags.
 
-def viterbi_logprobs(  # TODO: refactor & separate training from tagging!
-        transitions: defaultdict,
-        emissions: defaultdict,
-        initial_state: defaultdict,
-        sentence: str,  # TODO...
-        states: list,
-        vocab: set,
-):
-    """
-    Parameters
-    ----------
-    transitions: transition matrix (probability that state i is followed by state j) ->
-        NxN where N is the number of possible states (tags, e.g. `noun`, `verb`, `adj`).
-    emissions: observation matrix (probability that a word belongs to state) ->
-        NxT where N is the number of possible states and T is the length of the sentence.
-    initial_state: initial probabilities matrix (probability the first word belongs to state) ->
-        1xN where N is the number of possible states.
+        Parameters
+        ----------
+        sentence :
+            A sequence of words to be tagged
 
-    Returns
-    -------
-    viterbi: np.array
-        matrix with the probabilities computed at each step t
-    backpointer: list[int]
-        list of indexes of the optimal
-    best_logprobability: float
-        probability of the best path found
+        Returns
+        -------
+        viterbi : np.array
+            Matrix with the probabilities computed at each step t
+        best_path : list[tuple[str, str]]
+            Sentence word by word with the most probable tags
+        best_prob : float
+            Probability of the best path found
+        """
+        # class vars initialization
+        transitions = self.transition_matrix
+        emissions = self.emission_matrix
+        initial_state = self.initial_state
+        tagset = self.tagset
+        vocabulary = self.vocabulary
 
-    """
-    # variable initialization
-    words = sentence.split(" ")
-    words = [word if word in vocab else "UNK" for word in words]
+        # construct viterbi matrix
+        words = [word if word in vocabulary else "UNK" for word in sentence.split(" ")]
+        N, T = len(tagset), len(words)
+        viterbi = np.full((N, T), -np.inf)
+        backpointer = []
 
-    N = len(states)
-    T = len(words)
-    viterbi = np.full((N, T), -np.inf)
-    backpointer = []
-
-    # initialization step
-    for idx, state in enumerate(states):
-        viterbi[idx, 0] = initial_state[state] + emissions[words[0]][state]
-    best_arg = np.argmax(viterbi[:, 0])
-    best_logprob = viterbi[best_arg, 0]
-    backpointer.append(best_arg)
-
-    for idx_word, word in enumerate(words[1:], 1):  # note that it skips the first word
-        for idx_state, state in enumerate(states):
-            viterbi[idx_state, idx_word] = (
-                    best_logprob + transitions[states[backpointer[-1]]][state] + emissions[word][state]
-            )
-        best_arg = np.argmax(viterbi[:, idx_word])
-        best_logprob = viterbi[best_arg, idx_word]
+        # initialization step
+        for idx, tag in enumerate(tagset):
+            viterbi[idx, 0] = initial_state[tag] + emissions[words[0]][tag]
+        best_arg = np.argmax(viterbi[:, 0])
+        best_prob = viterbi[best_arg, 0]
         backpointer.append(best_arg)
 
-    return viterbi, backpointer, best_logprob
+        # compute next steps
+        for idx_word, word in enumerate(words[1:], 1):  # note that it skips the first word
+            for idx_tag, tag in enumerate(tagset):
+                viterbi[idx_tag, idx_word] = (
+                        best_prob + transitions[tagset[backpointer[-1]]][tag] + emissions[word][tag]
+                )
+            best_arg = np.argmax(viterbi[:, idx_word])
+            best_prob = viterbi[best_arg, idx_word]
+            backpointer.append(best_arg)
+
+        # compute best path from backpointer
+        tags = [tagset[i] for i in backpointer]
+        best_path = list(zip(sentence.split(" "), tags))
+
+        return viterbi, best_path, best_prob
+
+
+# # # Tests  # TODO: move to tests.ipynb
+c = parse_conllu_file(filepath="../datasets/en_partut-ud-train.conllu")
+tagger = HiddenMarkovModelTrainer(corpus=c).train()
+sent = """The labor-participation rate for women with post-secondary education is 64%, far exceeding the 35% rate for those with only a primary or middle-school education."""
+matrix, path, prob = tagger.viterbi_best_path(sentence=sent)
+print(path)
