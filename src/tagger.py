@@ -4,6 +4,10 @@ from typing import List
 
 from src.scrapper import parse_conllu_file
 
+# TODO: classes
+# pos_tagger.HiddenMarkovModelTrainer
+# pos_tagger.HiddenMarkovModelTagger
+
 
 def get_transition_matrix(corpus: List[List[tuple]]):
     """
@@ -19,13 +23,16 @@ def get_transition_matrix(corpus: List[List[tuple]]):
     -------
     transition_matrix : defaultdict[defaultdict]
         A matrix representing the probabilities of transitioning from one POS tag to another,
-        containing the log2 of the probability, so that A[i][j] = log2(p(i->j)).
-        A[prev_tag][current_tag] contains the log probability of transitioning from prev_tag
+        containing the log2 of each probability, so that A[i][j] = log2(p(i->j)).
+
+        A[prev_tag][current_tag] contains the log-probability of transitioning from prev_tag
         to current_tag. So if we want to know the log-probability of seeing a "NOUN" after a
         "DET", A["DET"]["NOUN"] should be accessed.
     """
-    # count all instances of each distinct tag following each distinct tag
+    # init accumulators
     count = defaultdict(lambda: defaultdict(lambda: 0))
+
+    # count all instances of each distinct tag following each distinct tag
     for sentence in corpus:
         for prev, current in zip(sentence[:-1], sentence[1:]):
             count[prev[1]][current[1]] += 1
@@ -58,7 +65,7 @@ def get_emission_matrix(corpus: List[List[tuple]], unk_threshold=3):
 
     Returns
     -------
-    tuple[defaultdict[defaultdict], set, set]
+    emission_matrix, vocab, tags : tuple[defaultdict[defaultdict], set, set]
         A tuple containing three elements:
 
         emission_matrix : defaultdict[defaultdict]
@@ -107,47 +114,56 @@ def get_emission_matrix(corpus: List[List[tuple]], unk_threshold=3):
     return emission_matrix, vocab, tags
 
 
-def get_initial_state(corpus: List[List[tuple]]):  # TODO: refactor
+def get_initial_state(corpus: List[List[tuple]]):
     """
-    Calculates the probability of being in the start of a sentence every possible state.
+    Compute the initial state (first word tag) probabilities from a corpus of tagged sentences.
 
     Parameters
     ----------
     corpus : list[list[tuple]]
-        All the training senteces as a list of tuples.
+        A list of sentences, where each sentence is represented as a list of
+        (word, POS_tag) tuples.
 
     Returns
     -------
-    PI : ????
-        ...
+    initial_state : defaultdict
+        A vector representing the probabilities of the first word of a sentence being a certain
+        type of POS tag, containing the log2 of each probability.
     """
+    # init accumulators
     count = defaultdict(lambda: 0)
+
+    # count every instance of distinct tags for the first word of every sentence
     for sentence in corpus:
-        first_state = sentence[0][1]
-        count[first_state] += 1
+        first_word_tag = sentence[0][1]
+        count[first_word_tag] += 1
 
-    PI = defaultdict(lambda: -np.inf)
+    # calculate the probability of each distinct tag being the first tag
+    initial_state = defaultdict(lambda: -np.inf)
     total = sum(count.values())
-    for state, freq in count.items():
-        PI[state] = np.log2(freq / total)
+    for tag, freq in count.items():
+        initial_state[tag] = np.log2(freq / total)
 
-    return PI
+    return initial_state
 
 
-def viterbi_logprobs(  # TODO: refactor
-    A: defaultdict,
-    B: defaultdict,
-    PI: defaultdict,
-    sentence: str,
-    states: list,
-    vocab: set,
+def viterbi_logprobs(  # TODO: refactor & separate training from tagging!
+        transitions: defaultdict,
+        emissions: defaultdict,
+        initial_state: defaultdict,
+        sentence: str,  # TODO...
+        states: list,
+        vocab: set,
 ):
     """
     Parameters
     ----------
-    A: transition matrix -> NxN where N is the number of states that can occur (e.g. Noun, Verbs, Adjectives, etc)
-    B: observation matrix (probability that a word belongs to state) -> NxT where T is the length of the sentence.
-    PI: initial probabilities matrix (probability of a word of being in the beginning of the sentence 1xN.
+    transitions: transition matrix (probability that state i is followed by state j) ->
+        NxN where N is the number of possible states (tags, e.g. `noun`, `verb`, `adj`).
+    emissions: observation matrix (probability that a word belongs to state) ->
+        NxT where N is the number of possible states and T is the length of the sentence.
+    initial_state: initial probabilities matrix (probability the first word belongs to state) ->
+        1xN where N is the number of possible states.
 
     Returns
     -------
@@ -170,7 +186,7 @@ def viterbi_logprobs(  # TODO: refactor
 
     # initialization step
     for idx, state in enumerate(states):
-        viterbi[idx, 0] = PI[state] + B[words[0]][state]
+        viterbi[idx, 0] = initial_state[state] + emissions[words[0]][state]
     best_arg = np.argmax(viterbi[:, 0])
     best_logprob = viterbi[best_arg, 0]
     backpointer.append(best_arg)
@@ -178,7 +194,7 @@ def viterbi_logprobs(  # TODO: refactor
     for idx_word, word in enumerate(words[1:], 1):  # skipping first word
         for idx_state, state in enumerate(states):
             viterbi[idx_state, idx_word] = (
-                best_logprob + A[states[backpointer[-1]]][state] + B[word][state]
+                    best_logprob + transitions[states[backpointer[-1]]][state] + emissions[word][state]
             )
         best_arg = np.argmax(viterbi[:, idx_word])
         best_logprob = viterbi[best_arg, idx_word]
