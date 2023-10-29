@@ -1,10 +1,10 @@
 # POS-tagger
 POS tagger for the English language made with datasets from Universal Dependencies.
 
-# Getting started
+# 🚀 Getting started
 Once we finish state how to get started (install dependencies, etc)
 
-# The data 
+# 🖋️ The data 
 
 * The data used has been extracted from the resources provided by the [Universal Dependencies Project](https://universaldependencies.org/).
 * For the analysis, two datasets from different languages have been used: English and Catalan.
@@ -21,7 +21,7 @@ Once we finish state how to get started (install dependencies, etc)
 * Train dataset available [here](https://github.com/UniversalDependencies/UD_Catalan-AnCora/blob/master/ca_ancora-ud-train.conllu) (13123 sentences)
 * Test dataset available [here](https://github.com/UniversalDependencies/UD_Catalan-AnCora/blob/master/ca_ancora-ud-test.conllu) (1846 sentences)
 
-# Ideas for the analysis
+# 💡 Ideas for the analysis
 Putting it here atm to have it in mind:
 
 * Analyze results with the datasets, plot matrixes with the happy path and probabilities
@@ -31,7 +31,7 @@ Putting it here atm to have it in mind:
 * Compare with multiplication and addition maybe?
 * Compare using matrices vs dicts
 
-# Tasks
+# 📝 Tasks
 - [ ] Build "predict" -> build the class
 - [ ] Refactor code and convert to class
 - [ ] Performance analysis (computationally-wise)
