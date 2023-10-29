@@ -6,48 +6,48 @@ from IPython.display import display_html
 
 
 def get_stats(dataset: list[list[tuple]]):
-    sentence_lenghts = [len(sentence) for sentence in dataset]
+    sentence_lengths = [len(sentence) for sentence in dataset]
 
     print(f"Total sentences: {len(dataset)}")
-    print(f"Average sentence length: {round(np.mean(sentence_lenghts))}")
-    print(f"Minimum sentence length: {min(sentence_lenghts)}")
-    print(f"Maximum sentence length: {max(sentence_lenghts)}")
-    print(f"Percentile 25, lenght: {np.percentile(sentence_lenghts, 25)}")
-    print(f"Percentile 50, lenght: {np.percentile(sentence_lenghts, 50)}")
-    print(f"Percentile 75, lenght: {np.percentile(sentence_lenghts, 75)}")
+    print(f"Average sentence length: {round(np.mean(sentence_lengths))}")
+    print(f"Minimum sentence length: {min(sentence_lengths)}")
+    print(f"Maximum sentence length: {max(sentence_lengths)}")
+    print(f"Percentile 25, length: {np.percentile(sentence_lengths, 25)}")
+    print(f"Percentile 50, length: {np.percentile(sentence_lengths, 50)}")
+    print(f"Percentile 75, length: {np.percentile(sentence_lengths, 75)}")
 
 
 def build_counts(dataset: list[list[tuple]]) -> tuple[Counter, Counter, Counter]:
-    word_counts = Counter()
+    token_counts = Counter()
     tag_counts = Counter()
     pair_counts = Counter()
 
     for sentence in dataset:
-        for word, tag in sentence:
-            word_counts[word] += 1
+        for token, tag in sentence:
+            token_counts[token] += 1
             tag_counts[tag] += 1
-            pair_counts[f"({word},{tag})"] += 1
+            pair_counts[f"({token},{tag})"] += 1
 
-    return word_counts, tag_counts, pair_counts
+    return token_counts, tag_counts, pair_counts
 
 
 def build_dataframes(info: list[tuple]):
     tags = []
-    words = []
+    tokens = []
 
     for sentence in info:
-        for word, tag in sentence:
-            words += [word]
+        for token, tag in sentence:
+            tokens += [token]
             tags += [tag]
-    return pd.DataFrame({"words": words, "tags": tags, "count": 1})
+    return pd.DataFrame({"tokens": tokens, "tags": tags, "count": 1})
 
 
-def print_top_words_given_tag(
+def print_top_tokens_given_tag(
     df: pd.DataFrame, tag: str, top: float = 5
 ) -> pd.DataFrame:
     return (
         df[df.tags == tag]
-        .groupby(["tags", "words"])
+        .groupby(["tags", "tokens"])
         .sum()
         .reset_index()
         .sort_values(by=["tags", "count"], ascending=False)[:top]
@@ -60,3 +60,16 @@ def display_side_by_side(*args):
     for df in args:
         html_str += df.to_html()
     display_html(html_str.replace("table", 'table style="display:inline"'), raw=True)
+
+
+def visualize_sample(dataset: list[list[tuple]], idx: int) -> dict:
+    tokens = [token for token, tag in dataset[idx]]
+    tags = [tag for token, tag in dataset[idx]]
+    return pd.DataFrame({"tokens": tokens, "tags": tags}).T
+
+
+def get_sentence_idx_given_pair(dataset: pd.DataFrame, pair: tuple[str, str]) -> int:
+    for idx in range(len(dataset)):
+        sentence = dataset[idx]
+        if (pair) in sentence:
+            return idx
