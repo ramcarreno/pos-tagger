@@ -2,7 +2,7 @@ from collections import defaultdict
 import numpy as np
 from typing import List
 
-from scrapper import parse_conllu_file
+# from scrapper import parse_conllu_file
 
 
 class HiddenMarkovModelTrainer:
@@ -204,8 +204,3 @@ class HiddenMarkovModelTagger:
 
 
 # # # Tests  # TODO: move to tests.ipynb
-c = parse_conllu_file(filepath="../datasets/en_partut-ud-train.conllu")
-tagger = HiddenMarkovModelTrainer(corpus=c).train()
-sent = """The labor-participation rate for women with post-secondary education is 64%, far exceeding the 35% rate for those with only a primary or middle-school education."""
-matrix, path, prob = tagger.viterbi_best_path(sentence=sent)
-print(path)

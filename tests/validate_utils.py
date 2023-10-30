@@ -1,10 +1,10 @@
 import sys
 import numpy as np
 
-from src.tagger import get_transition_matrix, get_emission_matrix, get_initial_state
-from src.scrapper import parse_conllu_file
+# from src.tagger import get_transition_matrix, get_emission_matrix, get_initial_state
+# from src.scrapper import parse_conllu_file
 
-sys.path.insert(1, "..")  # TODO: change this
+# sys.path.insert(1, "..")  # TODO: change this
 
 
 def validate_transition_matrix(transition_matrix, epsilon=0.0000001):
