@@ -1,7 +1,6 @@
 import numpy as np
 from functools import reduce
 
-
 def predict_all(corpus, tagger):
     corpus_p = []
     for sentence in test:
