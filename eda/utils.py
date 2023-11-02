@@ -6,9 +6,10 @@ import nltk
 from nltk.corpus import stopwords
 from collections import Counter
 from wordcloud import WordCloud
-from PIL import Image 
+from PIL import Image
 
 from IPython.display import display_html
+
 
 # Print basic information for data exploration
 def get_stats(dataset: list[list[tuple]]):
@@ -22,10 +23,39 @@ def get_stats(dataset: list[list[tuple]]):
     print(f"Percentile 50, length: {np.percentile(sentence_lengths, 50)}")
     print(f"Percentile 75, length: {np.percentile(sentence_lengths, 75)}")
 
+
 # Build token, tag, and token-tag pair counts excluding stopwords and common punctuation for visualization
-def build_counts_nostop(dataset: list[list[tuple]], language: str) -> tuple[Counter, Counter, Counter]:
+def build_counts_nostop(
+    dataset: list[list[tuple]], language: str
+) -> tuple[Counter, Counter, Counter]:
     stop_words = set(stopwords.words(language))
-    punctuation = [",", ".", "(", ")", "-", "?", "¿", "!", "¡", "'s", ":", "[", "]", "\"", "'", "–", "—", "'s", "”", "“", "l'", ";", "s'", "d'", "_"]
+    punctuation = [
+        ",",
+        ".",
+        "(",
+        ")",
+        "-",
+        "?",
+        "¿",
+        "!",
+        "¡",
+        "'s",
+        ":",
+        "[",
+        "]",
+        '"',
+        "'",
+        "–",
+        "—",
+        "'s",
+        "”",
+        "“",
+        "l'",
+        ";",
+        "s'",
+        "d'",
+        "_",
+    ]
     token_counts = Counter()
     tag_counts = Counter()
     pair_counts = Counter()
@@ -38,6 +68,7 @@ def build_counts_nostop(dataset: list[list[tuple]], language: str) -> tuple[Coun
                 pair_counts[f"({token},{tag})"] += 1
 
     return token_counts, tag_counts, pair_counts
+
 
 # Build token, tag, and token-tag pair counts withouth excluding stopwords or punctuation for plotting
 def build_counts(dataset: list[list[tuple]]) -> tuple[Counter, Counter, Counter]:
@@ -102,12 +133,17 @@ def get_sentence_idx_given_pair(dataset: pd.DataFrame, pair: tuple[str, str]) ->
         if (pair) in sentence:
             return idx
 
+
 # Generate a wordcloud imagen
 def wordcloud(train_info: list[list[tuple]], language: str):
     # Remove stopwords
     stop_words = set(stopwords.words(language))
     if language == "catalan":
-        tokens_word_cloud = [w[0][0] for w in train_info if not w[0][0] in stop_words and len(w[0][0]) > 2]
+        tokens_word_cloud = [
+            w[0][0]
+            for w in train_info
+            if not w[0][0] in stop_words and len(w[0][0]) > 2
+        ]
     else:
         tokens_word_cloud = [w[0][0] for w in train_info if not w[0][0] in stop_words]
 
