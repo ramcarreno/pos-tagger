@@ -2,10 +2,8 @@ from collections import defaultdict
 import numpy as np
 from typing import List
 
-# from scrapper import parse_conllu_file
 
-
-class HiddenMarkovModelTrainer:
+class HiddenMarkovModel:
     def __init__(self, corpus: List[List[tuple]]):
         self.corpus = corpus
 
@@ -201,6 +199,3 @@ class HiddenMarkovModelTagger:
         best_path = list(zip(sentence.split(" "), tags))
 
         return viterbi, best_path, best_prob
-
-
-# # # Tests  # TODO: move to tests.ipynb
