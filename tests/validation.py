@@ -92,20 +92,10 @@ def validate_initial_state(initial_state, epsilon=0.0000001):
         raise Exception(f"ERROR: Sum of probabilities {total} should be 1.")
 
 
-def predict_all(corpus, tagger):
-    corpus_p = []
-    for sentence in corpus:
-        s = reduce(lambda x, y: x + ' ' + y, map(lambda x: x[0], sentence))
-        _, s_p, _ = tagger.viterbi_best_path(s)
-        corpus_p.append(s_p)
-
-    return corpus_p
-
-
-def prob_of_error_propagation(expected_list, prediction_list):
+def get_error_propagation_prob(expected_list, prediction_list):
     """
     This function measures the probability of if a token prediction is wrong
-    wich is the probability that the next token prediction is also wrong.
+    which is the probability that the next token prediction is also wrong.
     """
     n = 0
     propagations = 0
@@ -125,12 +115,78 @@ def prob_of_error_propagation(expected_list, prediction_list):
         return -1
 
 
-def get_confusion_matrix(corpus, corpus_p, tagset):
-    N = len(tagset)
-    cm = np.zeros((N, N))
-    for i in range(len(corpus)):
-        expected, prediction = corpus[i], corpus_p[i]
-        for token, token_p in zip(map(lambda x: x[1], expected), map(lambda x: x[1], prediction)):
-            cm[tagset.index(token), tagset.index(token_p)] += 1
+def get_accuracy(confusion_matrix):
+    # get the matrix diagonal and sum all the correct predictions (true positives for each tag)
+    diagonal = np.diagonal(confusion_matrix)
+    total_correct = np.sum(diagonal)
 
-    return cm
+    # sum the total number of predictions made
+    total_predictions = np.sum(confusion_matrix)
+
+    # accuracy is defined as the ratio of correct predictions made
+    accuracy = total_correct / total_predictions
+
+    return accuracy
+
+
+def get_precision(confusion_matrix):
+    # number of tags
+    total_tags = len(confusion_matrix)
+
+    precisions, predictions = [], []
+
+    for i in range(total_tags):
+        # each column contains all the info we need
+        total_tag_correct = confusion_matrix[i, i]  # tp for that tag
+        total_tag_predictions = np.sum(confusion_matrix[:, i])
+
+        # precision is defined as the ratio of true predictions from all positive (applies to a certain tag)
+        if total_tag_predictions == 0:  # some tags may not appear in the test set at all
+            precision = 0
+        else:
+            precision = total_tag_correct / total_tag_predictions
+
+        precisions.append(precision)
+        predictions.append(int(total_tag_predictions))
+
+    # micro precision (weighted avg)
+    diagonal = np.diagonal(confusion_matrix)
+    micro_precision = np.dot(precisions, diagonal) / sum(diagonal)
+
+    # macro precision (plain avg of all classes, not weighted)
+    macro_precision = np.mean(precisions)
+
+    return precisions, predictions, micro_precision, macro_precision
+
+
+def get_recall(confusion_matrix):
+    # number of tags
+    total_tags = len(confusion_matrix)
+
+    recalls, predictions = [], []
+
+    for i in range(total_tags):
+        # each column contains all the info we need
+        total_tag_correct = confusion_matrix[i, i]  # tp for that tag
+        total_tag_predictions = np.sum(confusion_matrix[i, :])
+
+        # recall is defined as the true positive ratio (applies to a certain tag)
+        if total_tag_predictions == 0:  # some tags may not appear in the test set at all
+            recall = 0
+        else:
+            recall = total_tag_correct / total_tag_predictions
+        recalls.append(recall)
+        predictions.append(int(total_tag_predictions))
+
+    # micro recall (weighted avg)
+    diagonal = np.diagonal(confusion_matrix)
+    micro_recall = np.dot(recalls, diagonal) / sum(diagonal)
+
+    # macro recall (plain avg of all classes, not weighted)
+    macro_recall = np.mean(recalls)
+
+    return recalls, predictions, micro_recall, macro_recall
+
+
+def get_f1(precision, recall):
+    return 2 / (1 / precision + 1 / recall)

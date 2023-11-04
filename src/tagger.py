@@ -1,4 +1,6 @@
 from collections import defaultdict
+from functools import reduce
+
 import numpy as np
 from typing import List
 
@@ -157,7 +159,7 @@ class HiddenMarkovModelTagger:
 
         Returns
         -------
-        viterbi : np.array
+        viterbi_matrix : np.array
             Matrix with the probabilities computed at each step t
         best_path : list[tuple[str, str]]
             Sentence word by word with the most probable tags
@@ -174,28 +176,50 @@ class HiddenMarkovModelTagger:
         # construct viterbi matrix
         words = [word if word in vocabulary else "UNK" for word in sentence.split(" ")]
         N, T = len(tagset), len(words)
-        viterbi = np.full((N, T), -np.inf)
+        viterbi_matrix = np.full((N, T), -np.inf)
         backpointer = []
 
         # initialization step
         for idx, tag in enumerate(tagset):
-            viterbi[idx, 0] = initial_state[tag] + emissions[words[0]][tag]
-        best_arg = np.argmax(viterbi[:, 0])
-        best_prob = viterbi[best_arg, 0]
+            viterbi_matrix[idx, 0] = initial_state[tag] + emissions[words[0]][tag]
+        best_arg = np.argmax(viterbi_matrix[:, 0])
+        best_prob = viterbi_matrix[best_arg, 0]
         backpointer.append(best_arg)
 
         # compute next steps
         for idx_word, word in enumerate(words[1:], 1):  # note that it skips the first word
             for idx_tag, tag in enumerate(tagset):
-                viterbi[idx_tag, idx_word] = (
+                viterbi_matrix[idx_tag, idx_word] = (
                         best_prob + transitions[tagset[backpointer[-1]]][tag] + emissions[word][tag]
                 )
-            best_arg = np.argmax(viterbi[:, idx_word])
-            best_prob = viterbi[best_arg, idx_word]
+            best_arg = np.argmax(viterbi_matrix[:, idx_word])
+            best_prob = viterbi_matrix[best_arg, idx_word]
             backpointer.append(best_arg)
 
         # compute best path from backpointer
         tags = [tagset[i] for i in backpointer]
         best_path = list(zip(sentence.split(" "), tags))
 
-        return viterbi, best_path, best_prob
+        return viterbi_matrix, best_path, best_prob
+
+    def predict(self, corpus):
+        corpus_prediction = []
+        for sentence in corpus:
+            s = reduce(lambda x, y: x + ' ' + y, map(lambda x: x[0], sentence))
+            _, s_p, _ = self.viterbi_best_path(s)
+            corpus_prediction.append(s_p)
+
+        return corpus_prediction
+
+    def get_confusion_matrix(self, corpus, corpus_prediction):
+        tagset = self.tagset
+
+        N = len(tagset)
+        confusion_matrix = np.zeros((N, N)).astype(int)
+        for i in range(len(corpus)):
+            expected, prediction = corpus[i], corpus_prediction[i]
+            for token, token_predicted in zip(map(lambda x: x[1], expected),
+                                              map(lambda x: x[1], prediction)):
+                confusion_matrix[tagset.index(token), tagset.index(token_predicted)] += 1
+
+        return confusion_matrix
