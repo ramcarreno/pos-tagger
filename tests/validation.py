@@ -112,6 +112,7 @@ def get_error_propagation_prob(expected_list, prediction_list):
     if n != 0:
         return propagations / n
     else:
+        # There are no errors so we cant measure the probability
         return -1
 
 
