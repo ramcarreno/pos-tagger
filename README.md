@@ -1,17 +1,17 @@
 # POS-tagger
-POS tagger for the English language made with datasets from Universal Dependencies.
+POS tagger for any language made with datasets from Universal Dependencies.
 
 # 🚀 Getting started
 
 It is good practice to run all commands and installations inside a python environment. Check out [this page](https://docs.python.org/3/library/venv.html) to know how.
 
-To install the dependencies to reproduce this project, just run:
+To install the dependencies to reproduce this project, just run in the terminal:
 
 ````
     pip install -r requirements.txt
 ````
 
-To use this implementation of the pos tagger, you just have to use our class!
+To use this implementation of the pos tagger, you just have to use our class! Inside a python terminal run:
 
 ```python
 >>> from src.tagger import HiddenMarkovModel
