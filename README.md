@@ -18,25 +18,29 @@ To use this implementation of the pos tagger, you just have to use our class! In
 >>> from src.scrapper import parse_conllu_file
 
 >>> train = parse_conllu_file(filepath="datasets/en_gum-ud-train.conllu")
->>> test = [[('hello', ) , ('world', )]] 
+>>> tagger = HiddenMarkovModel(corpus=train).train()
 
+>>> test = [[('hello', ) , ('world', )]] 
 >>> tagger.predict(corpus=test)
 [[('hello', 'intj'), ('world', 'noun')]]
 
 ```
-
-Take a look at our analysis to check how to play around with all the functionalities: `viterbi_best_path`, `get_confusion_matrix`, etc!
+Read the documentation of the methods present in src/tagger.py to understand formatting, printing and how the input arguments work. 
+You can also play around with several methods present in the classes HiddenMarkovModel and HiddenMarkovModelTagger such as `viterbi_best_path`, `get_confusion_matrix`, et cetera.
 
 # 📌 The project
 
 In this repo we don't only provide the code to use your own POS-Tagger but also a a set of analyses performed in two datasets: exploratory data analysis, performance evaluation and a bit of algorithm profiling and cost assessment. The analyses and findings are recommended in the following order:
 
-1. **Exploratory Data Analysis** - To check out the data we have used to train and test our model. It is found inside the folder `eda/`. It is not recommended to re-run the execution of the notebooks since some of the plots and analysis might take a while to load. However, the results are already available and visible in the notebook itself. It is also recommended to check them with some notebook visualizator, since github does not show some of the interactive plots generated.
+1. **Exploratory Data Analysis** - To check out the data we have used to train and test our model. It is found inside the folder `eda/`. It is not recommended to re-run the execution of the notebooks since some of the plots and analysis might take a while to load. However, the results are already available and visible in the notebook itself. It is also recommended to check them with some notebook visualizator, since GitHub does not show some of the interactive plots generated. 
 
-2. **The algorithm** - A class has been implemented to use the pos-tagger with the viterbi implementation. The code is inside the folder `src/`. There, you can also find some visualization and preprocessing files with different functionalities.
+2. **The algorithm** - The class HiddenMarkovModelTagger has been implemented to use the pos-tagger with the viterbi implementation. It is wrapped by the class HiddenMarkovModel, which takes corpus data and returns a HiddenMarkovModelTagger instance intended for general use. The code is inside the folder `src/`. There, you can also find some scrapping and visualization/plotting modules with different functionalities.
 
-3. **Evaluation** - To check out the results provided by our pos-tagger implementation. We analyze some metrics using the test data explored in section 1. It is found inside the folder `evaluation/`.
-
+3. **Evaluation** - Notebooks where you can check out the results provided by our tagger implementation, validate the code, etc. It is found inside the folder `evaluation/`. Below it is listed a guide for all of the notebooks present in it.
+   * _model_evaluation.ipynb_ -> Very simple, lightweight analysis demonstrating the tagger works for simple sentences, validating transition & emission matrices consistency, etc.
+   * _english_model_evaluation.ipynb_ -> Performance analysis of the tagger model trained using the english language dataset, along with some relevant metrics
+   * _catalan_model_evaluation.ipynb_ -> Performance analysis of the tagger model trained using the catalan language dataset, along with some relevant metrics
+   * _cost_analysis.ipynb_ -> Computational cost of training analysis & trivia.
 
 # 📝 The data 
 
