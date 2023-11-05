@@ -7,9 +7,40 @@ from typing import List
 
 class HiddenMarkovModel:
     def __init__(self, corpus: List[List[tuple]]):
+        """
+        Initialize a Hidden Markov Model with a given corpus.
+
+        Parameters
+        ----------
+        corpus : List[List[tuple]]
+            A list of sentences, where each sentence is represented as
+            a list of (word, POS tag) tuples.
+
+        Notes
+        -----
+        This constructor initializes the Hidden Markov Model with the provided corpus,
+        which will be used for training the HMM.
+        """
         self.corpus = corpus
 
     def train(self):
+        """
+        Train the Hidden Markov Model based on the provided corpus and
+        return a HiddenMarkovModelTagger.
+
+        Returns
+        -------
+        hmm_tagger : HiddenMarkovModelTagger
+            A HiddenMarkovModelTagger trained with the transition matrix, emission matrix,
+            initial state, POS tagset, and vocabulary derived from the corpus.
+
+        Notes
+        -----
+        This method trains the Hidden Markov Model by computing the transition matrix,
+        emission matrix, initial state probabilities, POS tagset, and vocabulary from the
+        given corpus. It then creates and returns a HiddenMarkovModelTagger instance with
+        these parameters for later use in POS tagging tasks.
+        """
         return HiddenMarkovModelTagger(
             self.transition_matrix(),
             self.emission_matrix(),
@@ -19,6 +50,23 @@ class HiddenMarkovModel:
         )
 
     def vocabulary(self, unk_threshold=3):
+        """
+        Create a vocabulary of words based on word frequencies in the corpus.
+
+        Parameters
+        ----------
+        unk_threshold : int, optional
+            The frequency threshold below which words are considered rare and replaced
+            with the 'UNK' token. Words appearing less than or equal to `unk_threshold`
+            times are replaced with 'UNK'. Default value is 3 appearances.
+
+        Returns
+        -------
+        vocab : set
+            A set containing the vocabulary of words derived from the corpus.
+            The vocabulary includes common words and a special 'UNK' token
+            for rare words (below the threshold).
+        """
         # init
         words = defaultdict(lambda: 0)
         vocab = {"UNK"}
@@ -36,6 +84,15 @@ class HiddenMarkovModel:
         return vocab
 
     def tagset(self):
+        """
+        Get the set of all unique POS tags found in the corpus.
+
+        Returns
+        -------
+        tagset : tuple
+            A sorted tuple containing all distinct POS tags present in the corpus.
+            The tags are sorted in alphabetical order to maintain a consistent order.
+        """
         # init
         tagset = set()
 
@@ -44,7 +101,7 @@ class HiddenMarkovModel:
             for word, tag in sentence:
                 tagset.add(tag)
 
-        # convert resulting set to list so an order is kept
+        # convert resulting set to tuple so an order is kept
         tagset = tuple(sorted(tagset))
         return tagset
 
@@ -142,6 +199,36 @@ class HiddenMarkovModel:
 
 class HiddenMarkovModelTagger:
     def __init__(self, transition_matrix, emission_matrix, initial_state, tagset, vocabulary):
+        """
+        Initialize a Hidden Markov Model Tagger with its essential parameters.
+
+        Parameters
+        ----------
+        transition_matrix : defaultdict[defaultdict]
+            A matrix representing the probabilities of transitioning from one POS tag to another,
+            containing the log2 of each probability.
+
+        emission_matrix : defaultdict[defaultdict]
+            A matrix representing the probabilities of emitting words from POS tags,
+            containing the log2 of each probability.
+
+        initial_state : defaultdict
+            A dictionary representing the initial state probabilities for each POS tag.
+
+        tagset : tuple
+            A sorted tuple containing all distinct POS tags present in the corpus.
+
+        vocabulary : set
+            A set containing the vocabulary of words derived from the corpus.
+
+        Notes
+        -----
+        This constructor initializes a Hidden Markov Model Tagger with the key parameters necessary for
+        part-of-speech tagging. The `transition_matrix` represents the transition probabilities between
+        POS tags, the `emission_matrix` represents the probabilities of emitting words from POS tags,
+        the `initial_state` represents the initial state probabilities for each POS tag, the `tagset` is a
+        tuple of distinct POS tags, and the `vocabulary` is a set of words derived from the corpus.
+        """
         self.transition_matrix = transition_matrix
         self.emission_matrix = emission_matrix
         self.initial_state = initial_state
@@ -203,6 +290,20 @@ class HiddenMarkovModelTagger:
         return viterbi_matrix, best_path, best_prob
 
     def predict(self, corpus):
+        """
+        Perform POS tagging on a given corpus of sentences.
+
+        Parameters
+        ----------
+        corpus : List[List[tuple]]
+            A list of sentences, where each sentence is represented as a list of (word, POS tag) tuples.
+
+        Returns
+        -------
+        corpus_prediction : List[List[tuple]]
+            A list of tagged sentences, where each sentence is represented as a list of
+            (word, predicted POS tag) tuples.
+        """
         corpus_prediction = []
         for sentence in corpus:
             s = reduce(lambda x, y: x + ' ' + y, map(lambda x: x[0], sentence))
@@ -212,6 +313,25 @@ class HiddenMarkovModelTagger:
         return corpus_prediction
 
     def get_confusion_matrix(self, corpus, corpus_prediction):
+        """
+        Calculate the confusion matrix for POS tagging accuracy assessment.
+
+        Parameters
+        ----------
+        corpus : List[List[tuple]]
+            A list of sentences, where each sentence is represented as a list of (word, POS tag) tuples.
+            This represents the expected POS tag annotations.
+
+        corpus_prediction : List[List[tuple]]
+            A list of tagged sentences, where each sentence is represented as a list of
+            (word, predicted POS tag) tuples.
+
+        Returns
+        -------
+        confusion_matrix : numpy.ndarray
+            A 2D numpy array representing the confusion matrix, which provides a count of expected POS tags
+            versus predicted POS tags.
+        """
         tagset = self.tagset
 
         N = len(tagset)
