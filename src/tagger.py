@@ -45,7 +45,7 @@ class HiddenMarkovModel:
                 tagset.add(tag)
 
         # convert resulting set to list so an order is kept
-        tagset = list(tagset)
+        tagset = tuple(sorted(tagset))
         return tagset
 
     def transition_matrix(self):
