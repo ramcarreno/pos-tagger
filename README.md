@@ -29,7 +29,7 @@ Take a look at our analysis to check how to play around with all the functionali
 
 # 📌 The project
 
-In this repo we don't only provide the code to use your own POS-Tagger but also a a set of analysis performed in two datasets: exploratory data analysis, performance evaluation and a bit of algorithm profiling.  The analysis and findings are recommended in the following order:
+In this repo we don't only provide the code to use your own POS-Tagger but also a a set of analyses performed in two datasets: exploratory data analysis, performance evaluation and a bit of algorithm profiling and cost assessment. The analyses and findings are recommended in the following order:
 
 1. **Exploratory Data Analysis** - To check out the data we have used to train and test our model. It is found inside the folder `eda/`. It is not recommended to re-run the execution of the notebooks since some of the plots and analysis might take a while to load. However, the results are already available and visible in the notebook itself. It is also recommended to check them with some notebook visualizator, since github does not show some of the interactive plots generated.
 

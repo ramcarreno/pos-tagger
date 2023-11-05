@@ -84,3 +84,32 @@ def plot_frequency_of_(
 
     fig.update_layout(showlegend=False)
     fig.show()
+
+
+def compare_size_and_time(datasets: dict, timings: list[int], title=str):
+    fig = make_subplots(rows=1, cols=2)
+    fig.add_trace(
+        go.Scatter(
+            x=[key for key in datasets.keys()],
+            y=[len(value) for value in datasets.values()],
+            name="Size",
+        ),
+        row=1,
+        col=1,
+    )
+    fig.add_trace(
+        go.Scatter(x=[key for key in datasets.keys()], y=timings, name="Time"),
+        row=1,
+        col=2,
+    )
+
+    fig.update_xaxes(title_text=f"Dataset Name", row=1, col=1)
+    fig.update_yaxes(title_text="Number of rows", row=1, col=1)
+
+    fig.update_xaxes(title_text=f"Dataset Name", row=1, col=2)
+    fig.update_yaxes(title_text="Avg Time of Execution (s)", row=1, col=2)
+
+    if title:
+        fig.update_layout(title_text=title)
+
+    fig.show()
