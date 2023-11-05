@@ -1,4 +1,6 @@
 numpy~=1.24.4
+pandas
+nltk
 black
 black[jupyter]
 plotly
