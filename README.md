@@ -27,7 +27,7 @@ To use this implementation of the pos tagger, you just have to use our class!
 
 Take a look at our analysis to check how to play around with all the functionalities: `viterbi_best_path`, `get_confusion_matrix`, etc!
 
-# The project
+# 📌 The project
 
 In this repo we don't only provide the code to use your own POS-Tagger but also a a set of analysis performed in two datasets: exploratory data analysis, performance evaluation and a bit of algorithm profiling.  The analysis and findings are recommended in the following order:
 
