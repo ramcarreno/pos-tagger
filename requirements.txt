@@ -4,3 +4,6 @@ nltk
 black
 black[jupyter]
 plotly
+wordcloud
+matplotlib
+PIL
