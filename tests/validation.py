@@ -112,6 +112,7 @@ def get_error_propagation_prob(expected_list, prediction_list):
     if n != 0:
         return propagations / n
     else:
+        # There are no errors so we cant measure the probability
         return -1
 
 
@@ -188,5 +189,23 @@ def get_recall(confusion_matrix):
     return recalls, predictions, micro_recall, macro_recall
 
 
-def get_f1(precision, recall):
-    return 2 / (1 / precision + 1 / recall)
+def get_f1(confusion_matrix):
+    harmonic_mean = lambda x, y: 2/(1/x + 1/y)
+    recalls, r_preds, r_micro, r_macro = get_recall(confusion_matrix)
+    precs, p_preds, p_micro, p_macro = get_precision(confusion_matrix)
+    total_tags = len(confusion_matrix)
+
+    f1s, predictions = [], []
+
+    for i in range(total_tags):
+        # each column contains all the info we need
+        f1s.append(harmonic_mean(recalls[i], precs[i]))
+        predictions.append(int((r_preds[i]+p_preds[i])/2))
+
+    # micro f1 (weighted avg)
+    micro_f1 = (p_micro + r_micro)/2
+
+    # macro f1 (plain avg of all classes, not weighted)
+    macro_f1 = (p_macro + r_macro)/2
+
+    return f1s, predictions, micro_f1, macro_f1
