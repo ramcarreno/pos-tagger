@@ -40,7 +40,7 @@ In this repo we don't only provide the code to use your own POS-Tagger but also 
    * _model_testing.ipynb_ $\rightarrow$ Very simple, lightweight analysis demonstrating the tagger works for simple sentences, validating transition & emission matrices consistency, etc.
    * _english_model_evaluation.ipynb_ $\rightarrow$ Performance analysis of the tagger model trained using the english language dataset, along with some relevant metrics
    * _catalan_model_evaluation.ipynb_ $\rightarrow$ Performance analysis of the tagger model trained using the catalan language dataset, along with some relevant metrics
-   * _cost_analysis.ipynb_ $\rightarrow$ Computational cost of training analysis & trivia.
+   * _cost_analysis.ipynb_ $\rightarrow$ Computational cost of training and test and carbon print profiling.
   
 ⚠️ It is recommended to visualize the notebooks in a local environment, since github does not display all the plots we include.
 
