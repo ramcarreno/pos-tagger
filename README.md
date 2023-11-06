@@ -37,10 +37,10 @@ In this repo we don't only provide the code to use your own POS-Tagger but also 
 2. **The algorithm** - The class HiddenMarkovModelTagger has been implemented to use the pos-tagger with the viterbi implementation. It is wrapped by the class HiddenMarkovModel, which takes corpus data and returns a HiddenMarkovModelTagger instance intended for general use. The code is inside the folder `src/`. There, you can also find some scrapping and visualization/plotting modules with different functionalities.
 
 3. **Evaluation** - Notebooks where you can check out the results provided by our tagger implementation, validate the code, etc. It is found inside the folder `evaluation/`. Below it is listed a guide for all of the notebooks present in it.
-   * _model_testing.ipynb_ -> Very simple, lightweight analysis demonstrating the tagger works for simple sentences, validating transition & emission matrices consistency, etc.
-   * _english_model_evaluation.ipynb_ -> Performance analysis of the tagger model trained using the english language dataset, along with some relevant metrics
-   * _catalan_model_evaluation.ipynb_ -> Performance analysis of the tagger model trained using the catalan language dataset, along with some relevant metrics
-   * _cost_analysis.ipynb_ -> Computational cost of training analysis & trivia.
+   * _model_testing.ipynb_ $\rightarrow$ Very simple, lightweight analysis demonstrating the tagger works for simple sentences, validating transition & emission matrices consistency, etc.
+   * _english_model_evaluation.ipynb_ $\rightarrow$ Performance analysis of the tagger model trained using the english language dataset, along with some relevant metrics
+   * _catalan_model_evaluation.ipynb_ $\rightarrow$ Performance analysis of the tagger model trained using the catalan language dataset, along with some relevant metrics
+   * _cost_analysis.ipynb_ $\rightarrow$ Computational cost of training analysis & trivia.
   
 ⚠️ It is recommended to visualize the notebooks in a local environment, since github does not display all the plots we include.
 
