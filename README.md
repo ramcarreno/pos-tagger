@@ -41,6 +41,8 @@ In this repo we don't only provide the code to use your own POS-Tagger but also 
    * _english_model_evaluation.ipynb_ -> Performance analysis of the tagger model trained using the english language dataset, along with some relevant metrics
    * _catalan_model_evaluation.ipynb_ -> Performance analysis of the tagger model trained using the catalan language dataset, along with some relevant metrics
    * _cost_analysis.ipynb_ -> Computational cost of training analysis & trivia.
+  
+⚠️ It is recommended to visualize the notebooks in a local environment, since github does not display all the plots we include.
 
 # 📝 The data 
 
