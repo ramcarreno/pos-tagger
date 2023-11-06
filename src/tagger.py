@@ -46,7 +46,7 @@ class HiddenMarkovModel:
             self.emission_matrix(),
             self.initial_state(),
             self.tagset(),
-            self.vocabulary()
+            self.vocabulary(),
         )
 
     def vocabulary(self, unk_threshold=3):
@@ -129,7 +129,9 @@ class HiddenMarkovModel:
 
         # calculate the probability each distinct tag follows each distinct tag
         # and store in the form of a transition_matrix
-        transition_matrix = defaultdict(lambda: defaultdict(lambda: -np.inf))  # probability 0 to logprob -> -inf
+        transition_matrix = defaultdict(
+            lambda: defaultdict(lambda: -np.inf)
+        )  # probability 0 to logprob -> -inf
         for prev_tag, possible_tags in count.items():
             total = sum(possible_tags.values())
             for current_tag, freq in possible_tags.items():
@@ -198,7 +200,9 @@ class HiddenMarkovModel:
 
 
 class HiddenMarkovModelTagger:
-    def __init__(self, transition_matrix, emission_matrix, initial_state, tagset, vocabulary):
+    def __init__(
+        self, transition_matrix, emission_matrix, initial_state, tagset, vocabulary
+    ):
         """
         Initialize a Hidden Markov Model Tagger with its essential parameters.
 
@@ -274,10 +278,14 @@ class HiddenMarkovModelTagger:
         backpointer.append(best_arg)
 
         # compute next steps
-        for idx_word, word in enumerate(words[1:], 1):  # note that it skips the first word
+        for idx_word, word in enumerate(
+            words[1:], 1
+        ):  # note that it skips the first word
             for idx_tag, tag in enumerate(tagset):
                 viterbi_matrix[idx_tag, idx_word] = (
-                        best_prob + transitions[tagset[backpointer[-1]]][tag] + emissions[word][tag]
+                    best_prob
+                    + transitions[tagset[backpointer[-1]]][tag]
+                    + emissions[word][tag]
                 )
             best_arg = np.argmax(viterbi_matrix[:, idx_word])
             best_prob = viterbi_matrix[best_arg, idx_word]
@@ -306,7 +314,7 @@ class HiddenMarkovModelTagger:
         """
         corpus_prediction = []
         for sentence in corpus:
-            s = reduce(lambda x, y: x + ' ' + y, map(lambda x: x[0], sentence))
+            s = reduce(lambda x, y: x + " " + y, map(lambda x: x[0], sentence))
             _, s_p, _ = self.viterbi_best_path(s)
             corpus_prediction.append(s_p)
 
@@ -338,8 +346,11 @@ class HiddenMarkovModelTagger:
         confusion_matrix = np.zeros((N, N)).astype(int)
         for i in range(len(corpus)):
             expected, prediction = corpus[i], corpus_prediction[i]
-            for token, token_predicted in zip(map(lambda x: x[1], expected),
-                                              map(lambda x: x[1], prediction)):
-                confusion_matrix[tagset.index(token), tagset.index(token_predicted)] += 1
+            for token, token_predicted in zip(
+                map(lambda x: x[1], expected), map(lambda x: x[1], prediction)
+            ):
+                confusion_matrix[
+                    tagset.index(token), tagset.index(token_predicted)
+                ] += 1
 
         return confusion_matrix

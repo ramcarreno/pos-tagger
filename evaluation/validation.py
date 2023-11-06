@@ -28,9 +28,7 @@ def validate_transition_matrix(transition_matrix, epsilon=0.0000001):
             total += np.exp2(log_p)
 
         if abs(total - 1) > epsilon:
-            raise Exception(
-                f"ERROR: {tag}. Sum of probabilities {total} should be 1."
-            )
+            raise Exception(f"ERROR: {tag}. Sum of probabilities {total} should be 1.")
 
 
 def validate_emission_matrix(emission_matrix, epsilon=0.0000001):
@@ -59,9 +57,7 @@ def validate_emission_matrix(emission_matrix, epsilon=0.0000001):
             total += np.exp2(log_p)
 
         if abs(total - 1) > epsilon:
-            raise Exception(
-                f"ERROR: {word}. Sum of probabilities {total} should be 1."
-            )
+            raise Exception(f"ERROR: {word}. Sum of probabilities {total} should be 1.")
 
 
 def validate_initial_state(initial_state, epsilon=0.0000001):
@@ -142,7 +138,9 @@ def get_precision(confusion_matrix):
         total_tag_predictions = np.sum(confusion_matrix[:, i])
 
         # precision is defined as the ratio of true predictions from all positive (applies to a certain tag)
-        if total_tag_predictions == 0:  # some tags may not appear in the test set at all
+        if (
+            total_tag_predictions == 0
+        ):  # some tags may not appear in the test set at all
             precision = 0
         else:
             precision = total_tag_correct / total_tag_predictions
@@ -172,7 +170,9 @@ def get_recall(confusion_matrix):
         total_tag_predictions = np.sum(confusion_matrix[i, :])
 
         # recall is defined as the true positive ratio (applies to a certain tag)
-        if total_tag_predictions == 0:  # some tags may not appear in the test set at all
+        if (
+            total_tag_predictions == 0
+        ):  # some tags may not appear in the test set at all
             recall = 0
         else:
             recall = total_tag_correct / total_tag_predictions
@@ -190,7 +190,7 @@ def get_recall(confusion_matrix):
 
 
 def get_f1(confusion_matrix):
-    harmonic_mean = lambda x, y: 2/(1/x + 1/y)
+    harmonic_mean = lambda x, y: 2 / (1 / x + 1 / y)
     recalls, r_preds, r_micro, r_macro = get_recall(confusion_matrix)
     precs, p_preds, p_micro, p_macro = get_precision(confusion_matrix)
     total_tags = len(confusion_matrix)
@@ -200,12 +200,12 @@ def get_f1(confusion_matrix):
     for i in range(total_tags):
         # each column contains all the info we need
         f1s.append(harmonic_mean(recalls[i], precs[i]))
-        predictions.append(int((r_preds[i]+p_preds[i])/2))
+        predictions.append(int((r_preds[i] + p_preds[i]) / 2))
 
     # micro f1 (weighted avg)
-    micro_f1 = (p_micro + r_micro)/2
+    micro_f1 = (p_micro + r_micro) / 2
 
     # macro f1 (plain avg of all classes, not weighted)
-    macro_f1 = (p_macro + r_macro)/2
+    macro_f1 = (p_macro + r_macro) / 2
 
     return f1s, predictions, micro_f1, macro_f1
