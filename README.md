@@ -1,5 +1,5 @@
 # POS-tagger
-POS tagger for any language made with datasets from Universal Dependencies.
+POS tagger for English and Catalan trained with datasets from Universal Dependencies.
 
 # 🚀 Getting started
 
